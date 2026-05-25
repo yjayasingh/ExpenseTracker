@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <h1>Expense Tracker</h1>
+      <p class="subtitle">Track spending, stay on budget</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="summary-cards" id="summary-cards">
+      <div class="card">
+        <span class="card-label">Total this month</span>
+        <span class="card-value" id="total-month">Rs. 0.00</span>
+      </div>
+      <div class="card">
+        <span class="card-label">Transactions</span>
+        <span class="card-value" id="expense-count">0</span>
+      </div>
+      <div class="card">
+        <span class="card-label">Top category</span>
+        <span class="card-value card-value-sm" id="top-category">—</span>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Add expense</h2>
+        <form id="expense-form" class="form">
+          <div class="form-row">
+            <label for="amount">Amount (LKR)</label>
+            <input type="number" id="amount" name="amount" step="0.01" min="0.01" required placeholder="0.00">
+          </div>
+          <div class="form-row">
+            <label for="description">Description</label>
+            <input type="text" id="description" name="description" required placeholder="e.g. Grocery run">
+          </div>
+          <div class="form-row">
+            <label for="category">Category</label>
+            <select id="category" name="category" required>
+              {% for cat in categories %}
+              <option value="{{ cat }}">{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="expense_date">Date</label>
+            <input type="date" id="expense_date" name="expense_date" required>
+          </div>
+          <div class="form-row">
+            <label for="receipt">Receipt image <span class="optional">(optional)</span></label>
+            <input type="file" id="receipt" name="receipt" accept="image/png,image/jpeg,image/gif,image/webp">
+            <div id="receipt-preview" class="receipt-preview hidden"></div>
+          </div>
+          <button type="submit" class="btn btn-primary">Add expense</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>By category</h2>
+        <div id="category-chart" class="category-chart">
+          <p class="empty-state">No expenses yet</p>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel panel-full">
+      <div class="panel-header">
+        <h2>Expenses</h2>
+        <div class="filters">
+          <a href="/api/expenses/export" class="btn btn-secondary" id="export-excel">Export to Excel</a>
+          <input type="month" id="filter-month" value="{{ current_month }}">
+          <select id="filter-category">
+            <option value="">All categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="expense-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th class="amount-col">Amount</th>
+              <th>Receipt</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="expense-list">
+            <tr><td colspan="6" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="receipt-modal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Receipt image">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content">
+      <button type="button" class="modal-close" data-close-modal aria-label="Close">&times;</button>
+      <img id="modal-image" src="" alt="Receipt">
+    </div>
+  </div>
+
+  <script>
+    window.CURRENT_MONTH = "{{ current_month }}";
+  </script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

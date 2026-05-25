@@ -1,4 +1,4 @@
-# Expense Tracker
+# Expense Tracker v1.0
 
 A simple web app to track personal expenses with categories, monthly summaries, and spending breakdowns.
 
@@ -40,10 +40,34 @@ Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 .\venv\Scripts\pytest -v
 ```
 
+## Performance test
+
+Simulates **50 virtual users** with **10 concurrent** workers (configurable).
+
+```bash
+# Terminal 1 — start the app
+.\venv\Scripts\python app.py
+
+# Terminal 2 — install deps and run load test
+.\venv\Scripts\pip install -r requirements-perf.txt
+.\venv\Scripts\python performance_test.py
+```
+
+Options:
+
+```bash
+.\venv\Scripts\python performance_test.py --users 50 --concurrency 10 --base-url http://127.0.0.1:5000
+```
+
+Each user session hits: home page, categories, list expenses, create expense, summary, and (every 5th user) Excel export.
+
 ## Project structure
 
 ```
 ExpenseTracker/
+├── VERSION          # Release version (1.0.0)
+├── performance_test.py  # Load test (50 users, 10 concurrent)
+├── requirements-perf.txt
 ├── app.py           # Flask app and API routes
 ├── database.py      # SQLite helpers
 ├── receipts.py      # Receipt image upload helpers

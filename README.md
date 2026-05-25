@@ -42,7 +42,7 @@ Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser.
 
 ## Performance test
 
-Simulates **50 virtual users** with **10 concurrent** workers (configurable).
+Simulates **100 virtual users** with **25 concurrent** workers (configurable).
 
 ```bash
 # Terminal 1 — start the app
@@ -56,17 +56,17 @@ Simulates **50 virtual users** with **10 concurrent** workers (configurable).
 Options:
 
 ```bash
-.\venv\Scripts\python performance_test.py --users 50 --concurrency 10 --base-url http://127.0.0.1:5000
+.\venv\Scripts\python performance_test.py --users 100 --concurrency 25 --base-url http://127.0.0.1:5000
 ```
 
-Each user session hits: home page, categories, list expenses, create expense, summary, and (every 5th user) Excel export.
+Each user session hits: home page, categories, list expenses, create expense, summary, and (every 5th user) Excel export. Test data is **removed automatically** after the run (including leftovers from prior runs). Use `--no-cleanup` to keep it.
 
 ## Project structure
 
 ```
 ExpenseTracker/
 ├── VERSION          # Release version (1.0.0)
-├── performance_test.py  # Load test (50 users, 10 concurrent)
+├── performance_test.py  # Load test (100 users, 25 concurrent)
 ├── requirements-perf.txt
 ├── app.py           # Flask app and API routes
 ├── database.py      # SQLite helpers

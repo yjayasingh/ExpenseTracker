@@ -3,14 +3,14 @@
 Performance test for Expense Tracker.
 
 Simulates multiple virtual users with a fixed concurrency limit.
-Default: 50 users, 10 concurrent.
+Default: 100 users, 25 concurrent. Removes perf test expenses when finished.
 
 Start the app first:
     .\\venv\\Scripts\\python app.py
 
 Run:
     .\\venv\\Scripts\\python performance_test.py
-    .\\venv\\Scripts\\python performance_test.py --users 50 --concurrency 10 --base-url http://127.0.0.1:5000
+    .\\venv\\Scripts\\python performance_test.py --users 100 --concurrency 25 --base-url http://127.0.0.1:5000
 """
 
 from __future__ import annotations
@@ -27,9 +27,10 @@ from datetime import date
 import requests
 
 DEFAULT_BASE_URL = "http://127.0.0.1:5000"
-DEFAULT_USERS = 50
-DEFAULT_CONCURRENCY = 10
+DEFAULT_USERS = 100
+DEFAULT_CONCURRENCY = 25
 REQUEST_TIMEOUT = 30
+PERF_TEST_DESCRIPTION_PREFIX = "Perf test expense user"
 
 
 @dataclass
@@ -69,6 +70,18 @@ class MetricsCollector:
                 self.report.users_failed += 1
             else:
                 self.report.users_completed += 1
+
+
+class CreatedExpenseTracker:
+    """Thread-safe list of expense IDs created during the perf test."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self.ids: list[int] = []
+
+    def add(self, expense_id: int) -> None:
+        with self._lock:
+            self.ids.append(expense_id)
 
 
 def percentile(values: list[float], pct: float) -> float:
@@ -123,7 +136,10 @@ def timed_request(
 
 
 def simulate_user(
-    user_id: int, base_url: str, collector: MetricsCollector
+    user_id: int,
+    base_url: str,
+    collector: MetricsCollector,
+    created: CreatedExpenseTracker,
 ) -> None:
     """Typical user session: browse, list, add expense, summary, export."""
     session = requests.Session()
@@ -141,7 +157,7 @@ def simulate_user(
             {
                 "data": {
                     "amount": str(100 + user_id),
-                    "description": f"Perf test expense user {user_id}",
+                    "description": f"{PERF_TEST_DESCRIPTION_PREFIX} {user_id}",
                     "category": "Food",
                     "expense_date": today,
                 }
@@ -168,6 +184,16 @@ def simulate_user(
                 collector,
                 **extra,
             )
+            if (
+                method == "POST"
+                and path == "/api/expenses"
+                and response is not None
+                and response.ok
+            ):
+                try:
+                    created.add(response.json()["id"])
+                except (KeyError, ValueError):
+                    pass
             if response is None or not response.ok:
                 failed = True
                 break
@@ -175,6 +201,62 @@ def simulate_user(
         failed = True
     finally:
         collector.user_finished(failed)
+
+
+def find_perf_test_expense_ids(base_url: str, created: CreatedExpenseTracker) -> set[int]:
+    """Collect IDs from this run and any leftover perf test rows in the DB."""
+    ids = set(created.ids)
+    try:
+        response = requests.get(
+            f"{base_url.rstrip('/')}/api/expenses",
+            timeout=REQUEST_TIMEOUT,
+        )
+        if response.ok:
+            for expense in response.json():
+                desc = expense.get("description", "")
+                if desc.startswith(PERF_TEST_DESCRIPTION_PREFIX):
+                    ids.add(expense["id"])
+    except requests.RequestException:
+        pass
+    return ids
+
+
+def delete_expense(base_url: str, expense_id: int) -> bool:
+    try:
+        response = requests.delete(
+            f"{base_url.rstrip('/')}/api/expenses/{expense_id}",
+            timeout=REQUEST_TIMEOUT,
+        )
+        return response.ok
+    except requests.RequestException:
+        return False
+
+
+def cleanup_perf_test_data(
+    base_url: str, created: CreatedExpenseTracker, concurrency: int
+) -> tuple[int, int]:
+    """Remove all perf test expenses. Returns (deleted_count, failed_count)."""
+    ids = find_perf_test_expense_ids(base_url, created)
+    if not ids:
+        print("Cleanup: no perf test data to remove.")
+        return 0, 0
+
+    print(f"Cleanup: removing {len(ids)} perf test expense(s) ...")
+    deleted = 0
+    failed = 0
+
+    with ThreadPoolExecutor(max_workers=concurrency) as executor:
+        futures = {
+            executor.submit(delete_expense, base_url, eid): eid for eid in ids
+        }
+        for future in as_completed(futures):
+            if future.result():
+                deleted += 1
+            else:
+                failed += 1
+
+    print(f"Cleanup: deleted {deleted}, failed {failed}.")
+    return deleted, failed
 
 
 def check_server(base_url: str) -> bool:
@@ -267,6 +349,11 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_CONCURRENCY,
         help=f"Max concurrent users (default: {DEFAULT_CONCURRENCY})",
     )
+    parser.add_argument(
+        "--no-cleanup",
+        action="store_true",
+        help="Keep perf test expenses in the database after the run",
+    )
     return parser.parse_args()
 
 
@@ -292,6 +379,7 @@ def main() -> int:
         return 1
 
     collector = MetricsCollector()
+    created = CreatedExpenseTracker()
     print(
         f"Running {args.users} users with {args.concurrency} concurrent workers ..."
     )
@@ -299,7 +387,9 @@ def main() -> int:
     start = time.perf_counter()
     with ThreadPoolExecutor(max_workers=args.concurrency) as executor:
         futures = [
-            executor.submit(simulate_user, user_id, args.base_url, collector)
+            executor.submit(
+                simulate_user, user_id, args.base_url, collector, created
+            )
             for user_id in range(1, args.users + 1)
         ]
         for future in as_completed(futures):
@@ -307,6 +397,9 @@ def main() -> int:
     collector.report.wall_time_sec = time.perf_counter() - start
 
     print_report(collector.report, args.users, args.concurrency)
+
+    if not args.no_cleanup:
+        cleanup_perf_test_data(args.base_url, created, args.concurrency)
 
     if collector.report.users_failed > 0:
         return 1

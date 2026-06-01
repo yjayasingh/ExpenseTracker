@@ -48,20 +48,70 @@ function renderDashboardChart(points) {
   }
 
   const max = Math.max(...points.map((point) => point.total));
-  dashboardChart.innerHTML = points
-    .map((point) => {
-      const height = max ? Math.max((point.total / max) * 100, 4) : 0;
-      return `
-        <div class="dashboard-bar-item">
-          <div class="dashboard-bar-value">${formatMoney(point.total)}</div>
-          <div class="dashboard-bar-track">
-            <div class="dashboard-bar-fill" style="height: ${height}%"></div>
-          </div>
-          <div class="dashboard-bar-label">${escapeHtml(point.label)}</div>
-        </div>
-      `;
-    })
-    .join("");
+  const width = 900;
+  const height = 320;
+  const padding = { top: 28, right: 32, bottom: 48, left: 72 };
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+  const divisor = Math.max(points.length - 1, 1);
+  const coordinates = points.map((point, index) => {
+    const x = padding.left + (index / divisor) * plotWidth;
+    const y = padding.top + plotHeight - (point.total / max) * plotHeight;
+    return { ...point, x, y };
+  });
+  const linePath = coordinates
+    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+    .join(" ");
+  const areaPath = `${linePath} L ${coordinates[coordinates.length - 1].x} ${padding.top + plotHeight} L ${coordinates[0].x} ${padding.top + plotHeight} Z`;
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+    const value = max * ratio;
+    const y = padding.top + plotHeight - ratio * plotHeight;
+    return { value, y };
+  });
+
+  dashboardChart.innerHTML = `
+    <svg class="dashboard-line-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Expense trend line chart">
+      <g class="chart-grid">
+        ${yTicks
+          .map(
+            (tick) => `
+          <line x1="${padding.left}" y1="${tick.y}" x2="${width - padding.right}" y2="${tick.y}"></line>
+          <text x="${padding.left - 12}" y="${tick.y + 4}" text-anchor="end">${formatCompactMoney(tick.value)}</text>
+        `
+          )
+          .join("")}
+      </g>
+      <path class="chart-area" d="${areaPath}"></path>
+      <path class="chart-line" d="${linePath}"></path>
+      <g class="chart-points">
+        ${coordinates
+          .map(
+            (point) => `
+          <g>
+            <circle cx="${point.x}" cy="${point.y}" r="5"></circle>
+            <title>${escapeHtml(point.label)}: ${formatMoney(point.total)}</title>
+          </g>
+        `
+          )
+          .join("")}
+      </g>
+      <g class="chart-labels">
+        ${coordinates
+          .map(
+            (point) => `
+          <text x="${point.x}" y="${height - 16}" text-anchor="middle">${escapeHtml(point.label)}</text>
+        `
+          )
+          .join("")}
+      </g>
+    </svg>
+  `;
+}
+
+function formatCompactMoney(amount) {
+  if (amount >= 1000000) return `Rs. ${(amount / 1000000).toFixed(1)}M`;
+  if (amount >= 1000) return `Rs. ${(amount / 1000).toFixed(1)}K`;
+  return `Rs. ${Math.round(amount)}`;
 }
 
 function escapeHtml(text) {

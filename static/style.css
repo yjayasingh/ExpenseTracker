@@ -395,6 +395,7 @@ select:focus {
 }
 
 .expense-table .amount-col {
+  text-align: right;
   color: var(--success);
   font-weight: 500;
 }

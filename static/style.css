@@ -232,12 +232,26 @@ select:focus {
 .bar-label {
   display: flex;
   justify-content: space-between;
+  gap: 0.75rem;
   font-size: 0.85rem;
   margin-bottom: 0.25rem;
 }
 
-.bar-label span:last-child {
+.bar-label > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.bar-label > span:last-child {
   color: var(--text-muted);
+}
+
+.category-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  flex: 0 0 auto;
 }
 
 .bar-track {
@@ -297,8 +311,10 @@ select:focus {
   display: inline-block;
   padding: 0.2rem 0.5rem;
   background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .empty-state {

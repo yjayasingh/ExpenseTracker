@@ -9,8 +9,14 @@
 <body>
   <header class="header">
     <div class="header-inner">
-      <h1>Expense Tracker</h1>
-      <p class="subtitle">Track spending, stay on budget</p>
+      <div>
+        <h1>Expense Tracker</h1>
+        <p class="subtitle">Track spending, stay on budget</p>
+      </div>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="/" class="nav-link active">Dashboard</a>
+        <a href="#expenses" class="nav-link">Expenses</a>
+      </nav>
     </div>
   </header>
 
@@ -71,7 +77,7 @@
       </section>
     </div>
 
-    <section class="panel panel-full">
+    <section class="panel panel-full" id="expenses">
       <div class="panel-header">
         <h2>Expenses</h2>
         <div class="filters">

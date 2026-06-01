@@ -400,6 +400,24 @@ select:focus {
   font-weight: 500;
 }
 
+.amount-cell {
+  display: inline-grid;
+  grid-template-columns: 2.5rem minmax(4.5rem, 1fr);
+  gap: 0.4rem;
+  justify-content: end;
+  min-width: 8rem;
+}
+
+.amount-currency {
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.amount-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .category-badge {
   display: inline-block;
   padding: 0.2rem 0.5rem;

@@ -87,6 +87,22 @@ function formatMoney(amount) {
   }).format(amount);
 }
 
+function formatAmountCell(amount) {
+  return `
+    <span class="amount-cell">
+      <span class="amount-currency">LKR</span>
+      <span class="amount-value">${formatNumber(amount)}</span>
+    </span>
+  `;
+}
+
+function formatNumber(amount) {
+  return new Intl.NumberFormat("en-LK", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 function formatDate(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
   return d.toLocaleDateString("en-US", {
@@ -170,7 +186,7 @@ async function loadExpenses() {
       <td>${formatDate(e.expense_date)}</td>
       <td>${escapeHtml(e.description)}</td>
       <td>${categoryBadge(e.category)}</td>
-      <td class="amount-col">${formatMoney(e.amount)}</td>
+      <td class="amount-col">${formatAmountCell(e.amount)}</td>
       <td>${receiptCell(e.receipt_url)}</td>
       <td>
         <button class="btn btn-danger" data-id="${e.id}" aria-label="Delete">Delete</button>

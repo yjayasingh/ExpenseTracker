@@ -11,6 +11,13 @@ def test_index_page(client):
     assert b"Expense Tracker" in response.data
 
 
+def test_dashboard_page(client):
+    response = client.get("/dashboard")
+    assert response.status_code == 200
+    assert b"Spending graph" in response.data
+    assert b'<option value="">All</option>' in response.data
+
+
 def test_list_expenses_empty(client):
     response = client.get("/api/expenses")
     assert response.status_code == 200
@@ -112,6 +119,31 @@ def test_categories(client):
     response = client.get("/api/categories")
     assert response.status_code == 200
     assert "Food" in response.get_json()
+
+
+def test_dashboard_data_all_category(client):
+    db.add_expense(100, "May food", "Food", "2026-05-10")
+    db.add_expense(50, "May ride", "Transport", "2026-05-11")
+    db.add_expense(30, "Other year", "Food", "2025-05-11")
+
+    response = client.get("/api/dashboard?year=2026&month=05")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["total"] == 150
+    assert data["count"] == 2
+    assert data["category"] == ""
+
+
+def test_dashboard_data_category_filter(client):
+    db.add_expense(100, "May food", "Food", "2026-05-10")
+    db.add_expense(50, "May ride", "Transport", "2026-05-11")
+
+    response = client.get("/api/dashboard?year=2026&month=05&category=Food")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["total"] == 100
+    assert data["count"] == 1
+    assert data["category"] == "Food"
 
 
 def test_export_expenses(client):

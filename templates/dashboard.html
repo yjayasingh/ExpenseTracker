@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Expense Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div>
+        <h1>Dashboard</h1>
+        <p class="subtitle">Spending trends by category and date</p>
+      </div>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="/dashboard" class="nav-link active">Dashboard</a>
+        <a href="/" class="nav-link">Expenses</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel panel-full">
+      <div class="panel-header">
+        <h2>Spending graph</h2>
+        <div class="filters dashboard-filters">
+          <select id="dashboard-category" aria-label="Category">
+            <option value="">All</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+          </select>
+          <select id="dashboard-year" aria-label="Year">
+            {% for year in years %}
+            <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+          </select>
+          <select id="dashboard-month" aria-label="Month">
+            <option value="">All months</option>
+            <option value="01">January</option>
+            <option value="02">February</option>
+            <option value="03">March</option>
+            <option value="04">April</option>
+            <option value="05">May</option>
+            <option value="06">June</option>
+            <option value="07">July</option>
+            <option value="08">August</option>
+            <option value="09">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+        </div>
+      </div>
+
+      <section class="summary-cards dashboard-summary" aria-label="Dashboard summary">
+        <div class="card">
+          <span class="card-label">Total spend</span>
+          <span class="card-value" id="dashboard-total">Rs. 0.00</span>
+        </div>
+        <div class="card">
+          <span class="card-label">Transactions</span>
+          <span class="card-value" id="dashboard-count">0</span>
+        </div>
+      </section>
+
+      <div id="dashboard-chart" class="dashboard-chart">
+        <p class="empty-state">Loading...</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>

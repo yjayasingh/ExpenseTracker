@@ -175,6 +175,14 @@ body {
   gap: 0.5rem;
 }
 
+.dashboard-filters {
+  flex-wrap: wrap;
+}
+
+.dashboard-filters select {
+  min-width: 130px;
+}
+
 .form-row {
   margin-bottom: 1rem;
 }
@@ -258,6 +266,59 @@ select:focus {
 
 .category-chart {
   min-height: 120px;
+}
+
+.dashboard-summary {
+  margin-bottom: 1rem;
+}
+
+.dashboard-chart {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+  align-items: end;
+  gap: 0.75rem;
+  min-height: 280px;
+  padding-top: 1rem;
+}
+
+.dashboard-bar-item {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.5rem;
+  min-width: 0;
+  height: 260px;
+}
+
+.dashboard-bar-value {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+  min-height: 2.2rem;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-bar-track {
+  display: flex;
+  align-items: end;
+  min-height: 170px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.dashboard-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, #37c7ba 0%, #3b82f6 100%);
+  border-radius: 5px 5px 0 0;
+  transition: height 0.25s ease;
+}
+
+.dashboard-bar-label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .bar-row {

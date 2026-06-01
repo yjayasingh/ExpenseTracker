@@ -29,6 +29,21 @@ def index():
     )
 
 
+@app.route("/dashboard")
+def dashboard():
+    current_year = date.today().strftime("%Y")
+    years = db.get_available_years()
+    if current_year not in years:
+        years.insert(0, current_year)
+    return render_template(
+        "dashboard.html",
+        categories=db.CATEGORIES,
+        years=years,
+        current_year=current_year,
+        current_month=date.today().strftime("%m"),
+    )
+
+
 @app.route("/uploads/receipts/<path:filename>")
 def serve_receipt(filename):
     return send_from_directory(receipts.UPLOAD_DIR, filename)
@@ -90,6 +105,21 @@ def remove_expense(expense_id):
 def summary():
     month = request.args.get("month")
     return jsonify(db.get_summary(month=month))
+
+
+@app.route("/api/dashboard")
+def dashboard_data():
+    year = request.args.get("year") or date.today().strftime("%Y")
+    month = request.args.get("month") or None
+    category = request.args.get("category") or None
+
+    if month and (not month.isdigit() or int(month) < 1 or int(month) > 12):
+        return jsonify({"error": "Invalid month"}), 400
+
+    if category and category not in db.CATEGORIES:
+        return jsonify({"error": "Invalid category"}), 400
+
+    return jsonify(db.get_dashboard_data(year=year, month=month, category=category))
 
 
 @app.route("/api/categories")

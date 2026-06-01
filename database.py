@@ -18,6 +18,21 @@ CATEGORIES = [
     "Other",
 ]
 
+MONTH_NAMES = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
+
 
 def init_db():
     with get_connection() as conn:
@@ -102,6 +117,81 @@ def get_expenses(month=None, category=None):
     with get_connection() as conn:
         rows = conn.execute(query, params).fetchall()
         return [row_to_dict(r) for r in rows]
+
+
+def get_available_years():
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT DISTINCT substr(expense_date, 1, 4) AS year
+            FROM expenses
+            ORDER BY year DESC
+            """
+        ).fetchall()
+    years = [row["year"] for row in rows if row["year"]]
+    current_year = date.today().strftime("%Y")
+    return years or [current_year]
+
+
+def get_dashboard_data(year=None, month=None, category=None):
+    year = year or date.today().strftime("%Y")
+    category = category or None
+    month = month or None
+
+    query = "SELECT * FROM expenses WHERE expense_date LIKE ?"
+    params = [f"{year}%"]
+
+    if month:
+        query += " AND expense_date LIKE ?"
+        params.append(f"{year}-{int(month):02d}%")
+
+    if category:
+        query += " AND category = ?"
+        params.append(category)
+
+    with get_connection() as conn:
+        rows = conn.execute(query, params).fetchall()
+
+    expenses = [row_to_dict(row) for row in rows]
+    total = round(sum(expense["amount"] for expense in expenses), 2)
+
+    if month:
+        chart = _daily_dashboard_chart(expenses)
+    else:
+        chart = _monthly_dashboard_chart(expenses)
+
+    return {
+        "total": total,
+        "count": len(expenses),
+        "year": year,
+        "month": month or "",
+        "category": category or "",
+        "chart": chart,
+    }
+
+
+def _monthly_dashboard_chart(expenses):
+    totals = {f"{month:02d}": 0 for month in range(1, 13)}
+    for expense in expenses:
+        expense_month = expense["expense_date"][5:7]
+        totals[expense_month] = totals.get(expense_month, 0) + expense["amount"]
+
+    return [
+        {"label": MONTH_NAMES[index], "total": round(totals[f"{index + 1:02d}"], 2)}
+        for index in range(12)
+    ]
+
+
+def _daily_dashboard_chart(expenses):
+    totals = {}
+    for expense in expenses:
+        day = expense["expense_date"][8:10]
+        totals[day] = totals.get(day, 0) + expense["amount"]
+
+    return [
+        {"label": str(int(day)), "total": round(totals[day], 2)}
+        for day in sorted(totals)
+    ]
 
 
 def get_expense(expense_id):

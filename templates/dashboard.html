@@ -13,10 +13,8 @@
         <h1>Dashboard</h1>
         <p class="subtitle">Spending trends by category and date</p>
       </div>
-      <nav class="header-nav" aria-label="Main navigation">
-        <a href="/" class="nav-link">Expenses</a>
-        <a href="/dashboard" class="nav-link active">Dashboard</a>
-      </nav>
+      {% set active = 'dashboard' %}
+      {% include 'nav.html' %}
     </div>
   </header>
 

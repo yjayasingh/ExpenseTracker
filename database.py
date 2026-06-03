@@ -7,6 +7,11 @@ from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "expenses.db"
 
+MONTH_LABELS = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+]
+
 CATEGORIES = [
     "Food",
     "Transport",
@@ -234,4 +239,54 @@ def get_summary(month=None):
         "count": len(expenses),
         "by_category": category_breakdown,
         "month": month or date.today().strftime("%Y-%m"),
+    }
+
+
+def get_monthly_trends(category=None):
+    """Monthly expense totals grouped by year (12 months per year)."""
+    query = """
+        SELECT substr(expense_date, 1, 7) AS month_key,
+               SUM(amount) AS total
+        FROM expenses
+        WHERE 1=1
+    """
+    params = []
+    if category:
+        query += " AND category = ?"
+        params.append(category)
+    query += " GROUP BY month_key ORDER BY month_key"
+
+    with get_connection() as conn:
+        rows = conn.execute(query, params).fetchall()
+
+    by_year: dict[int, list[float]] = {}
+    for row in rows:
+        month_key = row["month_key"]
+        if not month_key or len(month_key) < 7:
+            continue
+        try:
+            year = int(month_key[:4])
+            month_num = int(month_key[5:7])
+        except ValueError:
+            continue
+        if month_num < 1 or month_num > 12:
+            continue
+        by_year.setdefault(year, [0.0] * 12)
+        by_year[year][month_num - 1] += float(row["total"])
+
+    years = sorted(by_year.keys(), reverse=True)
+    trends = {}
+    for year in years:
+        totals = [round(t, 2) for t in by_year[year]]
+        trends[str(year)] = {
+            "year": year,
+            "labels": MONTH_LABELS,
+            "totals": totals,
+            "year_total": round(sum(totals), 2),
+        }
+
+    return {
+        "years": years,
+        "trends": trends,
+        "category": category,
     }

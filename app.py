@@ -44,6 +44,11 @@ def dashboard():
     )
 
 
+@app.route("/reports")
+def reports():
+    return render_template("reports.html", categories=db.CATEGORIES)
+
+
 @app.route("/uploads/receipts/<path:filename>")
 def serve_receipt(filename):
     return send_from_directory(receipts.UPLOAD_DIR, filename)
@@ -120,6 +125,14 @@ def dashboard_data():
         return jsonify({"error": "Invalid category"}), 400
 
     return jsonify(db.get_dashboard_data(year=year, month=month, category=category))
+
+
+@app.route("/api/trends")
+def monthly_trends():
+    category = request.args.get("category") or None
+    if category and category not in db.CATEGORIES:
+        return jsonify({"error": "Invalid category"}), 400
+    return jsonify(db.get_monthly_trends(category=category))
 
 
 @app.route("/api/categories")

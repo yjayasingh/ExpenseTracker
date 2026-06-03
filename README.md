@@ -10,6 +10,7 @@ A simple web app to track personal expenses with categories, monthly summaries, 
 - Delete expenses
 - Attach receipt images (PNG, JPG, GIF, WebP, max 5 MB)
 - Export all expenses to Excel (.xlsx)
+- Monthly expense trend line charts for each year
 - Data stored locally in SQLite (`expenses.db`); receipts in `uploads/receipts/`
 
 ## Requirements

@@ -13,10 +13,8 @@
         <h1>Expense Tracker</h1>
         <p class="subtitle">Track spending, stay on budget</p>
       </div>
-      <nav class="header-nav" aria-label="Main navigation">
-        <a href="/" class="nav-link active">Expenses</a>
-        <a href="/dashboard" class="nav-link">Dashboard</a>
-      </nav>
+      {% set active = 'expenses' %}
+      {% include 'nav.html' %}
     </div>
   </header>
 

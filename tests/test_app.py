@@ -9,6 +9,16 @@ def test_index_page(client):
     response = client.get("/")
     assert response.status_code == 200
     assert b"Expense Tracker" in response.data
+    assert b"Reports" in response.data
+
+
+def test_reports_page(client):
+    response = client.get("/reports")
+    assert response.status_code == 200
+    assert b"Reports" in response.data
+    assert b"year-trends-charts" in response.data
+    assert b"trend-category" in response.data
+    assert b"reports.js" in response.data
 
 
 def test_dashboard_page(client):

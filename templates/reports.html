@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports — Expense Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div>
+        <h1>Expense Tracker</h1>
+        <p class="subtitle">Reports &amp; analytics</p>
+      </div>
+      {% set active = 'reports' %}
+      {% include 'nav.html' %}
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel panel-full" id="reports-section">
+      <div class="panel-header">
+        <div>
+          <h2>Reports</h2>
+          <p class="section-desc">Monthly expense trends for each year with recorded spending.</p>
+        </div>
+        <div class="filters">
+          <label for="trend-category" class="filter-label">Category</label>
+          <select id="trend-category" aria-label="Filter by category">
+            <option value="">All categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}">{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div id="year-trends-charts" class="trends-grid">
+        <p class="empty-state">Loading trends…</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="{{ url_for('static', filename='reports.js') }}"></script>
+</body>
+</html>
